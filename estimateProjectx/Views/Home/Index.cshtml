@@ -1,0 +1,73 @@
+﻿@model IEnumerable<estimateProject.Models.Session>
+@using Microsoft.AspNetCore.Identity
+
+@inject SignInManager<IdentityUser> SignInManager
+@inject UserManager<IdentityUser> UserManager
+@{
+    ViewData["Title"] = "Home Page";
+}
+
+@functions {
+    public async Task<string> GetUserEmail(string userId)
+    {
+        var user = await UserManager.FindByIdAsync(userId);
+        return user != null ? user.Email : "Unknown";
+    }
+}
+
+
+<div class="text-center">
+    <h1 class="display-4">Welcome to </h1>
+    <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#createSessionModal">
+        Create Session
+    </button>
+</div>
+
+@if (Model != null)
+{
+    <div>
+        @foreach (var session in Model)
+        {
+            <div class="card mt-3">
+                <div class="card-body">
+                    <h5 class="card-title">@session.Title</h5>
+                    <p class="card-text">@session.Description</p>
+                    <p class="card-text">Created by: @await GetUserEmail(session.IdentityUserId)</p>
+
+                    <a asp-action="EndSession" asp-route-id="@session.Id">End Session</a>
+                    
+                </div>
+            </div>
+        }
+    </div>
+}
+else
+{
+<p>No sessions found.</p>
+}
+
+<!-- Modal -->
+<div class="modal fade" id="createSessionModal" tabindex="-1" role="dialog" aria-labelledby="createSessionModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="createSessionModalLabel">Create Session</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                @await Html.PartialAsync("Create.cshtml", new estimateProject.Models.Session())
+
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Script to handle form submission -->
+@section Scripts {
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.bundle.min.js"></script>
+    
+
+}
