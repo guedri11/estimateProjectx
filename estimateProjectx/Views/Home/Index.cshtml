@@ -1,4 +1,4 @@
-﻿@model IEnumerable<estimateProject.Models.Session>
+﻿@model IEnumerable<estimateProjectx.Models.Session>
 @using Microsoft.AspNetCore.Identity
 
 @inject SignInManager<IdentityUser> SignInManager
@@ -17,7 +17,6 @@
 
 
 <div class="text-center">
-    <h1 class="display-4">Welcome to </h1>
     <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#createSessionModal">
         Create Session
     </button>
@@ -35,7 +34,10 @@
                     <p class="card-text">Created by: @await GetUserEmail(session.IdentityUserId)</p>
 
                     <a asp-action="EndSession" asp-route-id="@session.Id">End Session</a>
-                    
+
+                    <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#voteModal">
+                        Vote Now
+                    </button>
                 </div>
             </div>
         }
@@ -46,7 +48,7 @@ else
 <p>No sessions found.</p>
 }
 
-<!-- Modal -->
+<!-- Modal Session -->
 <div class="modal fade" id="createSessionModal" tabindex="-1" role="dialog" aria-labelledby="createSessionModalLabel" aria-hidden="true">
     <div class="modal-dialog" role="document">
         <div class="modal-content">
@@ -57,7 +59,25 @@ else
                 </button>
             </div>
             <div class="modal-body">
-                @await Html.PartialAsync("Create.cshtml", new estimateProject.Models.Session())
+                @await Html.PartialAsync("Create.cshtml", new estimateProjectx.Models.Session())
+
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Vote -->
+<div class="modal fade" id="voteModal" tabindex="-1" role="dialog" aria-labelledby="voteModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="voteModalLabel">What do you think?</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                @await Html.PartialAsync("../Votes/Create.cshtml", new estimateProjectx.Models.Vote())
 
             </div>
         </div>
