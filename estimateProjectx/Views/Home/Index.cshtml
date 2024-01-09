@@ -3,6 +3,7 @@
 
 @inject SignInManager<IdentityUser> SignInManager
 @inject UserManager<IdentityUser> UserManager
+
 @{
     ViewData["Title"] = "Home Page";
 }
@@ -15,14 +16,17 @@
     }
 }
 
-
 <div class="text-center">
     <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#createSessionModal">
         Create Session
     </button>
 </div>
 
-@if (Model != null)
+@if (Model == null || !Model.Any())
+{
+    <p>No sessions found.</p>
+}
+else
 {
     <div>
         @foreach (var session in Model)
@@ -35,17 +39,13 @@
 
                     <a asp-action="EndSession" asp-route-id="@session.Id">End Session</a>
 
-                    <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#voteModal">
+                    <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#voteModal" data-session-id="@session.Id">
                         Vote Now
                     </button>
                 </div>
             </div>
         }
     </div>
-}
-else
-{
-<p>No sessions found.</p>
 }
 
 <!-- Modal Session -->
@@ -77,9 +77,10 @@ else
                 </button>
             </div>
             <div class="modal-body">
-                @await Html.PartialAsync("../Votes/Create.cshtml", new estimateProjectx.Models.Vote())
+                @await Html.PartialAsync("~/Views/Votes/Create.cshtml", new estimateProjectx.Models.Vote())
 
             </div>
+
         </div>
     </div>
 </div>
@@ -88,6 +89,36 @@ else
 @section Scripts {
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.bundle.min.js"></script>
-    
+    <script>
+        $(document).ready(function () {
+            $("form#voteForm").submit(function (event) {
+                event.preventDefault(); // Prevents the default form submission
+
+                // Fetch the vote value from the form data
+                var voteValue = $(this).find("input[name='VoteValue']").val();
+                var sessionId = $(this).find("input[name='SessionId']").val(); // Assuming you have a SessionId field in your form
+                var identityUserId = $(this).find("input[name='IdentityUserId']").val(); // Assuming you have an IdentityUserId field in your form
+
+                // Make an AJAX POST request to create the vote
+                $.ajax({
+                    url: '@Url.Action("Create", "Votes")',
+                    type: 'POST',
+                    data: {
+                        VoteValue: voteValue,
+                        SessionId: sessionId,
+                        IdentityUserId: identityUserId
+                    },
+                    success: function (response) {
+                        // Handle the success response as needed
+                        console.log("Vote created successfully!");
+                    },
+                    error: function (xhr, status, error) {
+                        // Handle the error response as needed
+                        console.error("Error creating vote:", error);
+                    }
+                });
+            });
+        });
+    </script>
 
 }

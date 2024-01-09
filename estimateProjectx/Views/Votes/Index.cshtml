@@ -16,6 +16,9 @@
                 @Html.DisplayNameFor(model => model.SessionId)
             </th>
             <th>
+                @Html.DisplayNameFor(model => model.VoteValue)
+            </th>
+            <th>
                 @Html.DisplayNameFor(model => model.User)
             </th>
             <th></th>
@@ -26,6 +29,9 @@
         <tr>
             <td>
                 @Html.DisplayFor(modelItem => item.SessionId)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.VoteValue)
             </td>
             <td>
                 @Html.DisplayFor(modelItem => item.User.Id)

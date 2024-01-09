@@ -22,6 +22,7 @@ namespace estimateProjectx.Controllers
             _userManager = userManager;
         }
 
+        [Authorize]
         public async Task<IActionResult> Index()
         {
             var applicationDbContext = _context.Sessions.Include(s => s.User);
@@ -30,12 +31,14 @@ namespace estimateProjectx.Controllers
 
         // ... (other actions like Privacy, Error, etc.)
 
+        [Authorize]
         public IActionResult Create()
         {
             return View();
         }
 
         [HttpPost]
+        [Authorize]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create([Bind("Id,Title,Description,IdentityUserId")] Session session)
         {
@@ -48,6 +51,7 @@ namespace estimateProjectx.Controllers
             return View(session);
         }
 
+        [Authorize]
         public async Task<IActionResult> Edit(int? id)
         {
             if (id == null || _context.Sessions == null)
@@ -64,6 +68,7 @@ namespace estimateProjectx.Controllers
             return View(session);
         }
 
+        [Authorize]
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(int id, [Bind("Id,Title,Description,IdentityUserId")] Session session)
@@ -126,6 +131,7 @@ namespace estimateProjectx.Controllers
         }
 
 
+        [Authorize]
         [HttpPost, ActionName("EndSession")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)

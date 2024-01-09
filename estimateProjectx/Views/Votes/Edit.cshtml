@@ -19,6 +19,11 @@
                 <span asp-validation-for="SessionId" class="text-danger"></span>
             </div>
             <div class="form-group">
+                <label asp-for="VoteValue" class="control-label"></label>
+                <input asp-for="VoteValue" class="form-control" />
+                <span asp-validation-for="VoteValue" class="text-danger"></span>
+            </div>
+            <div class="form-group">
                 <label asp-for="IdentityUserId" class="control-label"></label>
                 <select asp-for="IdentityUserId" class="form-control" asp-items="ViewBag.IdentityUserId"></select>
                 <span asp-validation-for="IdentityUserId" class="text-danger"></span>

@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using estimateProjectx.Data;
 using estimateProjectx.Models;
+using Microsoft.AspNetCore.Authorization;
 
 namespace estimateProjectx.Controllers
 {
@@ -46,28 +47,37 @@ namespace estimateProjectx.Controllers
         }
 
         // GET: Votes/Create
-        public IActionResult Create()
+        public IActionResult Create(int sessionId) // Accepts the sessionId parameter
         {
-            ViewData["IdentityUserId"] = new SelectList(_context.Users, "Id", "Id");
+            ViewData["SessionId"] = sessionId;
             return View();
         }
 
-        // POST: Votes/Create
         // To protect from overposting attacks, enable the specific properties you want to bind to.
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
+        // POST: Votes/Create
         [HttpPost]
+        [Authorize]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("Id,SessionId,IdentityUserId")] Vote vote)
+        public async Task<IActionResult> Create([Bind("VoteValue,SessionId")] Vote vote)
         {
             if (ModelState.IsValid)
             {
-                _context.Add(vote);
-                await _context.SaveChangesAsync();
-                return RedirectToAction(nameof(Index));
+                var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+                if (userId != null)
+                {
+                    vote.IdentityUserId = userId;
+
+                    _context.Add(vote);
+                    await _context.SaveChangesAsync();
+                    return RedirectToAction("Details", "Sessions", new { id = vote.SessionId }); // Redirect to session details after vote
+                }
             }
-            ViewData["IdentityUserId"] = new SelectList(_context.Users, "Id", "Id", vote.IdentityUserId);
             return View(vote);
         }
+
+
+
 
         // GET: Votes/Edit/5
         public async Task<IActionResult> Edit(int? id)
@@ -91,7 +101,7 @@ namespace estimateProjectx.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("Id,SessionId,IdentityUserId")] Vote vote)
+        public async Task<IActionResult> Edit(int id, [Bind("Id,SessionId,VoteValue,IdentityUserId")] Vote vote)
         {
             if (id != vote.Id)
             {
@@ -162,7 +172,7 @@ namespace estimateProjectx.Controllers
 
         private bool VoteExists(int id)
         {
-          return (_context.Vote?.Any(e => e.Id == id)).GetValueOrDefault();
+            return _context.Vote.Any(e => e.Id == id);
         }
     }
 }

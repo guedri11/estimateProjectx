@@ -1,37 +1,85 @@
 ﻿@model estimateProjectx.Models.Vote
+@using Microsoft.AspNetCore.Identity
 
+@inject SignInManager<IdentityUser> SignInManager
+@inject UserManager<IdentityUser> UserManager
 @{
-    ViewData["Title"] = "Create";
+    ViewData["Title"] = "Estimation";
 }
 
-<h1>Create</h1>
-
-<h4>Vote</h4>
-<hr />
 <div class="row">
-    <div class="col-md-4">
-        <form asp-action="Create">
+    <div class="modal-body">
+        <form id="voteForm" asp-action="Create" method="post">
             <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-            <div class="form-group">
-                <label asp-for="SessionId" class="control-label"></label>
-                <input asp-for="SessionId" class="form-control" />
-                <span asp-validation-for="SessionId" class="text-danger"></span>
+
+            <!-- Hidden input for SessionId -->
+            <input type="hidden" asp-for="SessionId" class="form-control" value="@ViewBag.SessionId" />
+
+            <div class="row">
+                <div class="col-12">
+                    <div class="list-group" id="list-tab" role="tablist">
+                        <button class="list-group-item list-group-item-action" id="Lv1">1</button>
+                        <button class="list-group-item list-group-item-action" id="Lv3">3</button>
+                        <button class="list-group-item list-group-item-action" id="Lv5">5</button>
+                        <button class="list-group-item list-group-item-action" id="Lv8">8</button>
+                        <button class="list-group-item list-group-item-action" id="Lv13">13</button>
+                    </div>
+                </div>
             </div>
+
             <div class="form-group">
-                <label asp-for="IdentityUserId" class="control-label"></label>
-                <select asp-for="IdentityUserId" class ="form-control" asp-items="ViewBag.IdentityUserId"></select>
-            </div>
-            <div class="form-group">
-                <input type="submit" value="Create" class="btn btn-primary" />
+                <!-- Hidden input to store the selected estimation value -->
+                <input type="hidden" id="voteValue" name="VoteValue" />
+                <input type="submit" id="submitVote" value="Confirm my estimation" class="btn btn-primary" style="display: none;" />
             </div>
         </form>
     </div>
 </div>
 
-<div>
-    <a asp-action="Index">Back to List</a>
-</div>
-
 @section Scripts {
-    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+        $(document).ready(function () {
+            // Event handler for estimation value buttons
+            $(".list-group-item").click(function () {
+                // Remove active class from all buttons
+                $(".list-group-item").removeClass("active");
+                // Add active class to the clicked button
+                $(this).addClass("active");
+                // Set the selected estimation value to the hidden input
+                $("#voteValue").val($(this).text());
+                // Display the submit button
+                $("#submitVote").show();
+            });
+
+            $("form#voteForm").submit(function (event) {
+                event.preventDefault(); // Prevents the default form submission
+
+                var voteValue = $("#voteValue").val(); // Get the selected estimation value
+
+                var formData = {
+                    VoteValue: voteValue,
+                    SessionId: @ViewBag.SessionId, // Assuming SessionId is set in your ViewBag
+                    IdentityUserId: '@UserManager.GetUserId(User)' // Get the current user's IdentityUserId
+                };
+
+                $.ajax({
+                    url: '@Url.Action("Create", "Votes")',
+                    type: 'POST',
+                    data: formData,
+                    headers: {
+                        RequestVerificationToken: $('input[name="__RequestVerificationToken"]').val()
+                    },
+                    success: function (response) {
+                        console.log("Vote created successfully!");
+                        // Handle success - e.g., show a success message or update the UI
+                    },
+                    error: function (xhr, status, error) {
+                        console.error("Error creating vote:", error);
+                        // Handle errors - e.g., show an error message to the user
+                    }
+                });
+            });
+        });
+    </script>
 }

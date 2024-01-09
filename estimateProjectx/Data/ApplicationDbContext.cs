@@ -12,6 +12,6 @@ namespace estimateProjectx.Data
         {
         }
         public DbSet<Session> Sessions { get; set; }
-        public DbSet<estimateProjectx.Models.Vote>? Vote { get; set; }
+        public DbSet<Vote> Vote { get; set; }
     }
 }
