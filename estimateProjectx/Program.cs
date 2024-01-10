@@ -14,12 +14,6 @@ builder.Services.AddDefaultIdentity<IdentityUser>(options => options.SignIn.Requ
     .AddEntityFrameworkStores<ApplicationDbContext>();
 builder.Services.AddControllersWithViews();
 
-builder.Services.ConfigureApplicationCookie(options =>
-{
-    options.LoginPath = ""; // Specify your desired login route
-});
-
-
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -41,6 +35,11 @@ app.UseRouting();
 
 app.UseAuthentication();
 app.UseAuthorization();
+
+app.MapControllerRoute(
+    name: "privacy",
+    pattern: "Home/Privacy",
+    defaults: new { controller = "Home", action = "Privacy" });
 
 app.MapControllerRoute(
     name: "default",

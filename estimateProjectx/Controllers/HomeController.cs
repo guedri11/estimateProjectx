@@ -22,6 +22,11 @@ namespace estimateProjectx.Controllers
             _userManager = userManager;
         }
 
+        public IActionResult Privacy()
+        {
+            return View();
+        }
+
         [Authorize]
         public async Task<IActionResult> Index()
         {
