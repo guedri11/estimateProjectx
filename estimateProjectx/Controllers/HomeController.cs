@@ -30,9 +30,25 @@ namespace estimateProjectx.Controllers
         [Authorize]
         public async Task<IActionResult> Index()
         {
-            var applicationDbContext = _context.Sessions.Include(s => s.User);
-            return View(await applicationDbContext.ToListAsync());
+            var sessionsWithVotes = await _context.Sessions
+                .Include(s => s.User)
+                .Include(s => s.Votes)
+                .ToListAsync();
+
+            // Calculate and set VotesCount for each session
+            foreach (var session in sessionsWithVotes)
+            {
+                session.VotesCount = session.Votes?.Count(v => v.IdentityUserId != null) ?? 0;
+
+                // Check if all users have voted
+                var uniqueUserIds = session.Votes?.Select(v => v.IdentityUserId).Distinct().ToList();
+                var allUsersVoted = uniqueUserIds.Count == _userManager.Users.Count();
+            }
+
+            return View(sessionsWithVotes);
         }
+
+
 
         // ... (other actions like Privacy, Error, etc.)
 
@@ -49,12 +65,25 @@ namespace estimateProjectx.Controllers
         {
             if (ModelState.IsValid)
             {
+                session.CreatedAt = DateTime.UtcNow;
+                session.Votes = new List<Vote>();
                 _context.Add(session);
                 await _context.SaveChangesAsync();
                 return RedirectToAction(nameof(Index));
             }
+
+            // Log ModelState errors for debugging
+            foreach (var modelState in ModelState.Values)
+            {
+                foreach (var error in modelState.Errors)
+                {
+                    Console.WriteLine($"Error: {error.ErrorMessage}");
+                }
+            }
+
             return View(session);
         }
+
 
         [Authorize]
         public async Task<IActionResult> Edit(int? id)
@@ -83,6 +112,15 @@ namespace estimateProjectx.Controllers
                 return NotFound();
             }
 
+            // Retrieve the current logged-in user
+            var currentUser = await _userManager.GetUserAsync(User);
+
+            // Check if the session belongs to the current logged-in user
+            if (session.IdentityUserId != currentUser.Id)
+            {
+                return Forbid(); // Or return another appropriate result like a Forbidden page
+            }
+
             if (ModelState.IsValid)
             {
                 try
@@ -103,9 +141,33 @@ namespace estimateProjectx.Controllers
                 }
                 return RedirectToAction(nameof(Index));
             }
+
             ViewData["IdentityUserId"] = new SelectList(_context.Users, "Id", "Id", session.IdentityUserId);
             return View(session);
         }
+
+
+        [Authorize]
+        public async Task<IActionResult> Details(int? id)
+        {
+            if (id == null)
+            {
+                return NotFound();
+            }
+
+            var session = await _context.Sessions
+                .Include(s => s.User)
+                .FirstOrDefaultAsync(m => m.Id == id);
+
+            if (session == null)
+            {
+                return NotFound();
+            }
+
+            return View(session);
+        }
+
+
 
         [Authorize]
         public async Task<IActionResult> EndSession(int? id)

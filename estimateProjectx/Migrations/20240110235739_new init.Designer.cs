@@ -12,8 +12,8 @@ using estimateProjectx.Data;
 namespace estimateProjectx.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20240109190836_Added Votes")]
-    partial class AddedVotes
+    [Migration("20240110235739_new init")]
+    partial class newinit
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
@@ -32,6 +32,9 @@ namespace estimateProjectx.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"), 1L, 1);
 
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
                     b.Property<string>("Description")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -42,6 +45,9 @@ namespace estimateProjectx.Migrations
                     b.Property<string>("Title")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("VotesCount")
+                        .HasColumnType("int");
 
                     b.HasKey("Id");
 
@@ -59,9 +65,11 @@ namespace estimateProjectx.Migrations
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"), 1L, 1);
 
                     b.Property<string>("IdentityUserId")
+                        .IsRequired()
                         .HasColumnType("nvarchar(450)");
 
-                    b.Property<int>("SessionId")
+                    b.Property<int?>("SessionId")
+                        .IsRequired()
                         .HasColumnType("int");
 
                     b.Property<int>("VoteValue")
@@ -291,10 +299,12 @@ namespace estimateProjectx.Migrations
                 {
                     b.HasOne("Microsoft.AspNetCore.Identity.IdentityUser", "User")
                         .WithMany()
-                        .HasForeignKey("IdentityUserId");
+                        .HasForeignKey("IdentityUserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.HasOne("estimateProjectx.Models.Session", "Session")
-                        .WithMany()
+                        .WithMany("Votes")
                         .HasForeignKey("SessionId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -353,6 +363,11 @@ namespace estimateProjectx.Migrations
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+                });
+
+            modelBuilder.Entity("estimateProjectx.Models.Session", b =>
+                {
+                    b.Navigation("Votes");
                 });
 #pragma warning restore 612, 618
         }

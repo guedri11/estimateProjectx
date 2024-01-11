@@ -1,4 +1,5 @@
 ﻿@model IEnumerable<estimateProjectx.Models.Session>
+@using estimateProjectx.Models
 @using Microsoft.AspNetCore.Identity
 
 @inject SignInManager<IdentityUser> SignInManager
@@ -37,15 +38,58 @@ else
                     <p class="card-text">@session.Description</p>
                     <p class="card-text">Created by: @await GetUserEmail(session.IdentityUserId)</p>
 
+                    @if (session.VotesCount >= 0 && session.VotesCount == UserManager.Users.Count())
+                    {
+                        <p class="card-text">Votes:</p>
+                        <ul class="list-group">
+                            @if (session.Votes != null && session.Votes.Any())
+                            {
+                                <!-- Calculate and display average vote -->
+                                var totalVotes = session.Votes.Count();
+                                var averageVote = session.Votes.Sum(vote => vote.VoteValue) / totalVotes;
+
+                                <!-- Display individual votes -->
+                                @foreach (var vote in session.Votes)
+                                {
+                                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                                        <span>@await GetUserEmail(vote.IdentityUserId)</span>
+                                        <span>@vote.VoteValue</span>
+                                    </li>
+                                }
+
+                                <div class="d-flex justify-content-between align-items-center mt-3">
+                                    <span>The Estimation: -></span>
+                                    <button class="btn btn-danger" disabled>@averageVote</button>
+                                </div>
+
+
+                            }
+                            else
+                            {
+                                <li class="list-group-item">No votes yet.</li>
+                            }
+                        </ul>
+                    }
+                    else
+                    {
+                        <p class="card-text">
+                            Votes: Hidden <span id="progress-@session.Id">@session.VotesCount/@UserManager.Users.Count()</span>
+                        </p>
+                    }
+                    <br>
                     <a asp-action="EndSession" asp-route-id="@session.Id">End Session</a>
 
-                    <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#voteModal" data-session-id="@session.Id">
-                        Vote Now
+                    <button type="button" class="btn btn-primary estimate-button" data-toggle="modal" data-target="#voteModal" data-session-id="@session.Id">
+                        Estimate
                     </button>
                 </div>
             </div>
         }
     </div>
+
+
+
+
 }
 
 <!-- Modal Session -->
@@ -120,5 +164,13 @@ else
             });
         });
     </script>
+    <script>
+        $(document).ready(function () {
+            $('.estimate-button').click(function () {
+                var sessionId = $(this).data('session-id');
+                $('#voteModal').find("input[name='SessionId']").val(sessionId);
+            });
+        });
 
+    </script>
 }

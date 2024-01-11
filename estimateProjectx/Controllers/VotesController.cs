@@ -59,23 +59,25 @@ namespace estimateProjectx.Controllers
         [HttpPost]
         [Authorize]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("VoteValue,SessionId")] Vote vote)
+        public async Task<IActionResult> Create([Bind("Id,VoteValue,SessionId,IdentityUserId")] Vote vote)
         {
             if (ModelState.IsValid)
             {
                 var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
                 if (userId != null)
                 {
+                    if (ModelState.IsValid) 
+                    {
                     vote.IdentityUserId = userId;
 
                     _context.Add(vote);
                     await _context.SaveChangesAsync();
-                    return RedirectToAction("Details", "Sessions", new { id = vote.SessionId }); // Redirect to session details after vote
+                    return RedirectToAction("Details", "Home", new { id = vote.SessionId }); // Redirect to session details after vote
+                    }
                 }
             }
             return View(vote);
         }
-
 
 
 
@@ -168,6 +170,17 @@ namespace estimateProjectx.Controllers
             
             await _context.SaveChangesAsync();
             return RedirectToAction(nameof(Index));
+        }
+
+        [AcceptVerbs("Get", "Post")]
+        public IActionResult VerifyUniqueVote(int voteValue, int sessionId)
+        {
+            var dbContext = (ApplicationDbContext)HttpContext.RequestServices.GetService(typeof(ApplicationDbContext));
+
+            var existingVote = dbContext.Vote
+                .FirstOrDefault(v => v.SessionId == sessionId && v.VoteValue == voteValue);
+
+            return Json(existingVote == null);
         }
 
         private bool VoteExists(int id)

@@ -4,82 +4,42 @@
 @inject SignInManager<IdentityUser> SignInManager
 @inject UserManager<IdentityUser> UserManager
 @{
-    ViewData["Title"] = "Estimation";
+    ViewData["Title"] = "Create";
 }
 
 <div class="row">
-    <div class="modal-body">
-        <form id="voteForm" asp-action="Create" method="post">
+    <div class="col-md-4">
+        <form asp-controller="Votes" asp-action="Create" method="post">
             <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-
-            <!-- Hidden input for SessionId -->
-            <input type="hidden" asp-for="SessionId" class="form-control" value="@ViewBag.SessionId" />
-
-            <div class="row">
-                <div class="col-12">
-                    <div class="list-group" id="list-tab" role="tablist">
-                        <button class="list-group-item list-group-item-action" id="Lv1">1</button>
-                        <button class="list-group-item list-group-item-action" id="Lv3">3</button>
-                        <button class="list-group-item list-group-item-action" id="Lv5">5</button>
-                        <button class="list-group-item list-group-item-action" id="Lv8">8</button>
-                        <button class="list-group-item list-group-item-action" id="Lv13">13</button>
-                    </div>
-                </div>
-            </div>
-
             <div class="form-group">
-                <!-- Hidden input to store the selected estimation value -->
-                <input type="hidden" id="voteValue" name="VoteValue" />
-                <input type="submit" id="submitVote" value="Confirm my estimation" class="btn btn-primary" style="display: none;" />
+                <label asp-for="VoteValue" class="control-label"></label>
+                <select asp-for="VoteValue" class="form-control">
+                    <option value="1">1</option>
+                    <option value="3">3</option>
+                    <option value="5">5</option>
+                    <option value="8">8</option>
+                    <option value="13">13</option>
+                </select>
+                <span asp-validation-for="VoteValue" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <input type="hidden" asp-for="SessionId" value="@ViewBag.SessionId" />
+                <input type="hidden" asp-for="IdentityUserId" value="@UserManager.GetUserId(User)" />
+            </div>
+            <div class="form-group">
+                <br />
+                <input type="submit" value="Confirm Estimation" class="btn btn-primary" />
             </div>
         </form>
     </div>
 </div>
 
+<div>
+    <a asp-action="Index">Back to List</a>
+</div>
+
 @section Scripts {
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script>
-        $(document).ready(function () {
-            // Event handler for estimation value buttons
-            $(".list-group-item").click(function () {
-                // Remove active class from all buttons
-                $(".list-group-item").removeClass("active");
-                // Add active class to the clicked button
-                $(this).addClass("active");
-                // Set the selected estimation value to the hidden input
-                $("#voteValue").val($(this).text());
-                // Display the submit button
-                $("#submitVote").show();
-            });
-
-            $("form#voteForm").submit(function (event) {
-                event.preventDefault(); // Prevents the default form submission
-
-                var voteValue = $("#voteValue").val(); // Get the selected estimation value
-
-                var formData = {
-                    VoteValue: voteValue,
-                    SessionId: @ViewBag.SessionId, // Assuming SessionId is set in your ViewBag
-                    IdentityUserId: '@UserManager.GetUserId(User)' // Get the current user's IdentityUserId
-                };
-
-                $.ajax({
-                    url: '@Url.Action("Create", "Votes")',
-                    type: 'POST',
-                    data: formData,
-                    headers: {
-                        RequestVerificationToken: $('input[name="__RequestVerificationToken"]').val()
-                    },
-                    success: function (response) {
-                        console.log("Vote created successfully!");
-                        // Handle success - e.g., show a success message or update the UI
-                    },
-                    error: function (xhr, status, error) {
-                        console.error("Error creating vote:", error);
-                        // Handle errors - e.g., show an error message to the user
-                    }
-                });
-            });
-        });
-    </script>
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
 }

@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 namespace estimateProjectx.Migrations
 {
-    public partial class AddedVotes : Migration
+    public partial class newinit : Migration
     {
         protected override void Up(MigrationBuilder migrationBuilder)
         {
@@ -162,7 +162,9 @@ namespace estimateProjectx.Migrations
                         .Annotation("SqlServer:Identity", "1, 1"),
                     Title = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     Description = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    IdentityUserId = table.Column<string>(type: "nvarchar(450)", nullable: true)
+                    IdentityUserId = table.Column<string>(type: "nvarchar(450)", nullable: true),
+                    VotesCount = table.Column<int>(type: "int", nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -182,7 +184,7 @@ namespace estimateProjectx.Migrations
                         .Annotation("SqlServer:Identity", "1, 1"),
                     VoteValue = table.Column<int>(type: "int", nullable: false),
                     SessionId = table.Column<int>(type: "int", nullable: false),
-                    IdentityUserId = table.Column<string>(type: "nvarchar(450)", nullable: true)
+                    IdentityUserId = table.Column<string>(type: "nvarchar(450)", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -191,7 +193,8 @@ namespace estimateProjectx.Migrations
                         name: "FK_Vote_AspNetUsers_IdentityUserId",
                         column: x => x.IdentityUserId,
                         principalTable: "AspNetUsers",
-                        principalColumn: "Id");
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
                         name: "FK_Vote_Sessions_SessionId",
                         column: x => x.SessionId,
