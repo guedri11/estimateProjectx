@@ -40,7 +40,7 @@ else
 
                     @if (session.VotesCount >= 0 && session.VotesCount == UserManager.Users.Count())
                     {
-                        <p class="card-text">Votes:</p>
+                        <p class="card-text">Estimators & their estimation</p>
                         <ul class="list-group">
                             @if (session.Votes != null && session.Votes.Any())
                             {
@@ -57,9 +57,9 @@ else
                                     </li>
                                 }
 
-                                <div class="d-flex justify-content-between align-items-center mt-3">
-                                    <span>The Estimation: -></span>
-                                    <button class="btn btn-danger" disabled>@averageVote</button>
+                                <div class="alert alert-success text-center mt-3" role="alert">
+                                    <h5 class="alert-heading">The Estimation we recommend:</h5>
+                                    <button class="btn btn-success" disabled>@averageVote</button>
                                 </div>
 
 
@@ -79,9 +79,17 @@ else
                     <br>
                     <a asp-action="EndSession" asp-route-id="@session.Id">End Session</a>
 
-                    <button type="button" class="btn btn-primary estimate-button" data-toggle="modal" data-target="#voteModal" data-session-id="@session.Id">
-                        Estimate
+                    <button type="button" class="btn btn-primary estimate-button"
+                            data-toggle="modal" data-target="#voteModal" data-session-id="@session.Id"
+                    @(session.VotesCount == UserManager.Users.Count() ||
+                        session.Votes.Any(v => v.IdentityUserId == UserManager.GetUserId(User)) ? "disabled" : "")>
+                        @(session.VotesCount == UserManager.Users.Count()
+                            ? "Estimation is over"
+                            : (session.Votes.Any(v => v.IdentityUserId == UserManager.GetUserId(User))
+                            ? $"You already estimated: {session.Votes.First(v => v.IdentityUserId == UserManager.GetUserId(User)).VoteValue}"
+                            : "Estimate"))
                     </button>
+
                 </div>
             </div>
         }
