@@ -88,7 +88,7 @@ namespace estimateProjectx.Controllers
         [Authorize]
         public async Task<IActionResult> Edit(int? id)
         {
-            if (id == null || _context.Sessions == null)
+            if (id == null)
             {
                 return NotFound();
             }
@@ -98,6 +98,16 @@ namespace estimateProjectx.Controllers
             {
                 return NotFound();
             }
+
+            // Retrieve the current logged-in user
+            var currentUser = await _userManager.GetUserAsync(User);
+
+            // Check if the session belongs to the current logged-in user
+            if (session.IdentityUserId != currentUser.Id)
+            {
+                return Forbid(); // Or return another appropriate result like a Forbidden page
+            }
+
             ViewData["IdentityUserId"] = new SelectList(_context.Users, "Id", "Id", session.IdentityUserId);
             return View(session);
         }
@@ -145,6 +155,7 @@ namespace estimateProjectx.Controllers
             ViewData["IdentityUserId"] = new SelectList(_context.Users, "Id", "Id", session.IdentityUserId);
             return View(session);
         }
+
 
 
         [Authorize]
@@ -195,6 +206,33 @@ namespace estimateProjectx.Controllers
             }
 
             return View(session);
+        }
+
+        [Authorize]
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ChangeOwnership(int sessionId, string newOwnerId)
+        {
+            var session = await _context.Sessions.FindAsync(sessionId);
+            var newOwner = await _userManager.FindByIdAsync(newOwnerId);
+
+            if (session == null || newOwner == null)
+            {
+                return NotFound();
+            }
+
+            // Check if the session belongs to the current logged-in user
+            var currentUser = await _userManager.GetUserAsync(User);
+            if (session.IdentityUserId != currentUser.Id)
+            {
+                return Forbid(); // Or return another appropriate result like a Forbidden page
+            }
+
+            session.IdentityUserId = newOwnerId;
+            _context.Update(session);
+            await _context.SaveChangesAsync();
+
+            return RedirectToAction(nameof(Index));
         }
 
 

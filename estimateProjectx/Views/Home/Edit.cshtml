@@ -1,44 +1,84 @@
 ﻿@model estimateProjectx.Models.Session
+@using Microsoft.AspNetCore.Identity
+@using System.Security.Claims;
+
+@inject SignInManager<IdentityUser> SignInManager
+@inject UserManager<IdentityUser> UserManager
 
 @{
     ViewData["Title"] = "Edit";
 }
 
-<h1>Edit</h1>
+<h1 class="display-4">Edit Session</h1>
 
-<h4>Session</h4>
 <hr />
+
 <div class="row">
-    <div class="col-md-4">
-        <form asp-action="Edit">
-            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-            <input type="hidden" asp-for="Id" />
+    <div class="col-md-6">
+        <form id="editForm" asp-action="Edit">
+            <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+
             <div class="form-group">
-                <label asp-for="Title" class="control-label"></label>
+                <label asp-for="Title" class="control-label">Session Title</label>
                 <input asp-for="Title" class="form-control" />
                 <span asp-validation-for="Title" class="text-danger"></span>
             </div>
+
             <div class="form-group">
-                <label asp-for="Description" class="control-label"></label>
-                <input asp-for="Description" class="form-control" />
+                <label asp-for="Description" class="control-label">Description</label>
+                <textarea asp-for="Description" class="form-control" rows="4"></textarea>
                 <span asp-validation-for="Description" class="text-danger"></span>
             </div>
-            <div class="form-group">
-                <label asp-for="IdentityUserId" class="control-label"></label>
-                <select asp-for="IdentityUserId" class="form-control" asp-items="ViewBag.IdentityUserId"></select>
-                <span asp-validation-for="IdentityUserId" class="text-danger"></span>
-            </div>
+
+            <input type="hidden" asp-for="Id" />
+
             <div class="form-group">
                 <input type="submit" value="Save" class="btn btn-primary" />
+                <a asp-action="Index" class="btn btn-secondary">Cancel</a>
             </div>
         </form>
+
+        <!-- Button for Change Ownership -->
+        <button type="button" class="btn btn-danger" data-toggle="modal" data-target="#changeOwnershipModal">
+            Change Ownership
+        </button>
+        <span class="ml-2">Current Owner: @(await UserManager.FindByIdAsync(Model.IdentityUserId))</span>
+
+        <!-- Change Ownership Modal -->
+        <div class="modal" id="changeOwnershipModal" tabindex="-1" role="dialog" aria-labelledby="changeOwnershipModalLabel" aria-hidden="true">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="changeOwnershipModalLabel">Change Ownership</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <form asp-action="ChangeOwnership" asp-controller="Home" method="post" onsubmit="return confirm('\nAre you sure you want to confirm changing the ownership?\n\nThis action is final and irreversible!\n\nYour privileges to this session will be revoked!');">
+                            <!-- Add options dynamically based on all users except the current user -->
+                            @foreach (var user in UserManager.Users.Where(u => u.Id != SignInManager.Context.User.FindFirst(ClaimTypes.NameIdentifier).Value))
+                            {
+                                <div class="custom-control custom-radio">
+                                    <input type="radio" id="newOwner_@user.Id" name="newOwnerId" class="custom-control-input" value="@user.Id">
+                                    <label class="custom-control-label" for="newOwner_@user.Id">@user.Email</label>
+                                </div>
+                            }
+                            <br />
+                            <input type="hidden" name="sessionId" value="@Model.Id" />
+                            <button type="submit" class="btn btn-danger">Confirm</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 
-<div>
-    <a asp-action="Index">Back to List</a>
-</div>
-
 @section Scripts {
-    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+    <!-- Include Bootstrap JavaScript -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.5.2/js/bootstrap.min.js"></script>
 }
