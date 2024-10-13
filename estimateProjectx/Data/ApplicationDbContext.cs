@@ -1,7 +1,6 @@
 ﻿using estimateProjectx.Models;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
-using estimateProjectx.Models;
 
 namespace estimateProjectx.Data
 {

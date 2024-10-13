@@ -187,5 +187,96 @@ namespace estimateProjectx.Controllers
         {
             return _context.Vote.Any(e => e.Id == id);
         }
+
+        // GET: api/Votes/GetVotes/{sessionId}
+        [HttpGet("api/Votes/GetVotes/{sessionId}")]
+        public IActionResult GetVotes(int sessionId)
+        {
+            var votes = _context.Vote.Where(v => v.SessionId == sessionId).ToList();
+
+            if (votes == null || votes.Count == 0)
+            {
+                return NotFound(new { Message = "No votes found for this session." });
+            }
+
+            return Ok(votes);
+        }
+
+        [HttpPost]
+        [Route("api/Votes/SubmitVote")]
+        public async Task<IActionResult> SubmitVote([FromBody] Vote vote)
+        {
+            // Check if the vote value is within the acceptable range
+            if (vote.VoteValue < 1 || vote.VoteValue > 13 ||
+                (vote.VoteValue != 1 && vote.VoteValue != 3 && vote.VoteValue != 5 && vote.VoteValue != 8 && vote.VoteValue != 13))
+            {
+                return BadRequest("Invalid vote value. Please vote using 1, 3, 5, 8, or 13.");
+            }
+
+            // Get total number of registered users
+            int totalUsers = await _context.Users.CountAsync();
+
+            // Calculate maximum votes allowed (total registered users + 10 guest votes)
+            int maxVotesAllowed = totalUsers + 10;
+
+            // Get the current total number of votes for the session
+            int currentVotes = await _context.Vote.CountAsync(v => v.SessionId == vote.SessionId);
+
+            // Check if the current votes have reached the limit
+            if (currentVotes >= maxVotesAllowed)
+            {
+                return BadRequest("Free vote capacity reached. Please log in to continue voting.");
+            }
+
+            // Handle guest votes (ensure they don't exceed 10 guest votes)
+            if (string.IsNullOrEmpty(vote.IdentityUserId))
+            {
+                // Check the number of guest votes for the session
+                int guestVotes = await _context.Vote.CountAsync(v => v.SessionId == vote.SessionId && string.IsNullOrEmpty(v.IdentityUserId));
+
+                if (guestVotes >= 10)
+                {
+                    return BadRequest("Guest vote capacity reached. Please log in to continue voting.");
+                }
+
+                // Mark this vote as a guest vote by setting IdentityUserId to null
+                vote.IdentityUserId = null;
+            }
+
+            // Add the vote to the database
+            _context.Vote.Add(vote);
+
+            try
+            {
+                await _context.SaveChangesAsync();
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Internal server error: {ex.Message}");
+            }
+
+            return Ok(new { Message = "Vote submitted successfully." });
+        }
+
+
+
+
+
+        // GET: api/Votes/GetAverageVote/{sessionId}
+        [HttpGet("api/Votes/GetAverageVote/{sessionId}")]
+        public IActionResult GetAverageVote(int sessionId)
+        {
+            var votes = _context.Vote.Where(v => v.SessionId == sessionId).Select(v => v.VoteValue).ToList();
+
+            if (votes == null || votes.Count == 0)
+            {
+                return NotFound(new { Message = "No votes found for this session." });
+            }
+
+            var averageVote = votes.Average();
+            return Ok(new { AverageVote = averageVote });
+        }
+
+
     }
 }

@@ -12,7 +12,8 @@
         <form asp-controller="Votes" asp-action="Create" method="post" onsubmit="return confirm('\nAre you sure you want to confirm the estimation?\n\nThis action is final and irreversible!');">
             <div asp-validation-summary="ModelOnly" class="text-danger"></div>
             <div class="form-group">
-                <label asp-for="VoteValue" class="control-label"></label>
+                <label asp-for="VoteValue" class="control-label">Your vote:</label>
+                </br>
                 <select asp-for="VoteValue" class="form-control">
                     <option value="1">1</option>
                     <option value="3">3</option>

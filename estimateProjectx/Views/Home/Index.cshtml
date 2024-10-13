@@ -13,7 +13,12 @@
     public async Task<string> GetUserEmail(string userId)
     {
         var user = await UserManager.FindByIdAsync(userId);
-        return user != null ? user.Email : "Unknown";
+        return user != null ? user.Email : "Guest";
+    }
+
+    public bool IsGuestVote(string userId)
+    {
+        return string.IsNullOrEmpty(userId); // Consider a vote a guest vote if userId is null or empty
     }
 }
 
@@ -38,18 +43,28 @@ else
                     <p class="card-text">@session.Description</p>
                     <p class="card-text">Created by: @await GetUserEmail(session.IdentityUserId)</p>
 
+                    @* Moved declaration of guestVotes and userVotes inside this block *@
+                    @{
+                        var guestVotes = session.Votes.Where(v => IsGuestVote(v.IdentityUserId)).ToList();
+                        var userVotes = session.Votes.Where(v => !IsGuestVote(v.IdentityUserId)).ToList();
+                    }
+
                     @if (session.VotesCount >= 0 && session.VotesCount == UserManager.Users.Count())
                     {
                         <p class="card-text">Estimators & their estimation</p>
                         <ul class="list-group">
                             @if (session.Votes != null && session.Votes.Any())
                             {
-                                <!-- Calculate and display average vote -->
-                                var totalVotes = session.Votes.Count();
-                                var averageVote = session.Votes.Sum(vote => vote.VoteValue) / totalVotes;
+                                <!-- Calculate and display average vote for registered users -->
+                                var userTotalVotes = userVotes.Count();
+                                var userAverageVote = userVotes.Sum(vote => vote.VoteValue) / userTotalVotes;
 
-                                <!-- Display individual votes -->
-                                @foreach (var vote in session.Votes)
+                                <!-- Calculate and display average vote for registered users + guests -->
+                                var combinedTotalVotes = session.Votes.Count(); // Includes both registered and guest votes
+                                var combinedAverageVote = session.Votes.Sum(vote => vote.VoteValue) / combinedTotalVotes;
+
+                                <!-- Display individual user votes -->
+                                @foreach (var vote in userVotes)
                                 {
                                     <li class="list-group-item d-flex justify-content-between align-items-center">
                                         <span>@await GetUserEmail(vote.IdentityUserId)</span>
@@ -57,11 +72,25 @@ else
                                     </li>
                                 }
 
+                                <!-- Display guest votes separately -->
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    <span><strong>Guests votes: @guestVotes.Count()</strong></span>
+                                    @foreach (var vote in guestVotes)
+                                    {
+                                        <span>@vote.VoteValue</span>
+                                    }
+                                </li>
+
+                                <!-- Display the two averages -->
                                 <div class="alert alert-success text-center mt-3" role="alert">
-                                    <h5 class="alert-heading">The Estimation we recommend:</h5>
-                                    <button class="btn btn-success" disabled>@averageVote</button>
+                                    <h5 class="alert-heading">Estimation for Registered Users:</h5>
+                                    <button class="btn btn-success" disabled>@userAverageVote</button>
                                 </div>
 
+                                <div class="alert alert-primary text-center mt-3" role="alert">
+                                    <h5 class="alert-heading">Estimation for Registered Users + Guests:</h5>
+                                    <button class="btn btn-primary" disabled>@combinedAverageVote</button>
+                                </div>
 
                             }
                             else
@@ -74,6 +103,7 @@ else
                     {
                         <p class="card-text">
                             Votes: Hidden <span id="progress-@session.Id">@session.VotesCount/@UserManager.Users.Count()</span>
+                            (Guests votes: @guestVotes.Count())
                         </p>
                     }
                     <br>
@@ -85,33 +115,25 @@ else
                             @(session.VotesCount == UserManager.Users.Count() ? "disabled" : "")>
                                 Edit
                             </button>
-                        
 
-
-                        <button type="button" class="btn btn-primary estimate-button"
-                                data-toggle="modal" data-target="#voteModal" data-session-id="@session.Id"
-                        @(session.VotesCount == UserManager.Users.Count() ||
-                            session.Votes.Any(v => v.IdentityUserId == UserManager.GetUserId(User)) ? "disabled" : "")>
-                            @(session.VotesCount == UserManager.Users.Count()
-                                ? "Estimation is over"
-                                : (session.Votes.Any(v => v.IdentityUserId == UserManager.GetUserId(User))
-                                ? $"You already estimated: {session.Votes.First(v => v.IdentityUserId == UserManager.GetUserId(User)).VoteValue}"
-                                : "Estimate"))
-                        </button>
+                            <button type="button" class="btn btn-primary estimate-button"
+                                    data-toggle="modal" data-target="#voteModal" data-session-id="@session.Id"
+                            @(session.VotesCount == UserManager.Users.Count() ||
+                                session.Votes.Any(v => v.IdentityUserId == UserManager.GetUserId(User)) ? "disabled" : "")>
+                                @(session.VotesCount == UserManager.Users.Count()
+                                    ? "Estimation is over"
+                                    : (session.Votes.Any(v => v.IdentityUserId == UserManager.GetUserId(User))
+                                    ? $"You already estimated: {session.Votes.First(v => v.IdentityUserId == UserManager.GetUserId(User)).VoteValue}"
+                                    : "Estimate"))
+                            </button>
                         </div>
                     </div>
-
 
                 </div>
             </div>
         }
     </div>
-
-
-
-
 }
-
 <!-- Modal Session -->
 <div class="modal fade" id="createSessionModal" tabindex="-1" role="dialog" aria-labelledby="createSessionModalLabel" aria-hidden="true">
     <div class="modal-dialog" role="document">
@@ -124,7 +146,6 @@ else
             </div>
             <div class="modal-body">
                 @await Html.PartialAsync("Create.cshtml", new estimateProjectx.Models.Session())
-
             </div>
         </div>
     </div>
@@ -142,9 +163,7 @@ else
             </div>
             <div class="modal-body">
                 @await Html.PartialAsync("~/Views/Votes/Create.cshtml", new estimateProjectx.Models.Vote())
-
             </div>
-
         </div>
     </div>
 </div>
@@ -191,6 +210,5 @@ else
                 $('#voteModal').find("input[name='SessionId']").val(sessionId);
             });
         });
-
     </script>
 }
